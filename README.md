@@ -6,7 +6,7 @@ Find The Difference. 2010
 Windows API
 
 
-### License
+## License (MIT)
 
 ```
 Copyright (c) 2010  SangHyeon Kim
