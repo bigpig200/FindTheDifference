@@ -1,53 +1,53 @@
 
 #include <windows.h>
 
-// Àü¿ª º¯¼ö
+// ì „ì—­ ë³€ìˆ˜
 LRESULT CALLBACK WndProc(HWND,UINT,WPARAM,LPARAM);
 HINSTANCE g_hInst;
-LPSTR lpszClass="¹Ù²ï±×¸²Ã£±â Made By. ±è»óÇö";
+LPSTR lpszClass="ë°”ë€ê·¸ë¦¼ì°¾ê¸° Made By. ê¹€ìƒí˜„";
 HWND hWnd;
+//djfiqej
+HBITMAP hBit; // Back Bufferê°€ ë  ë¹„íŠ¸ë§µí—¤ë”.
+HBITMAP hBit_map;	// ë°°ê²½í™”ë©´ì„ ê°€ë¦¬í‚¤ëŠ” ë¹„íŠ¸ë§µí—¤ë”.
+HBITMAP hBit_circle;	// ë™ê·¸ë¼ë¯¸ë¥¼ ê°€ë¦¬í‚¤ëŠ” ë¹„íŠ¸ë§µ í—¤ë”,
 
-HBITMAP hBit; // Back Buffer°¡ µÉ ºñÆ®¸ÊÇì´õ.
-HBITMAP hBit_map;	// ¹è°æÈ­¸éÀ» °¡¸®Å°´Â ºñÆ®¸ÊÇì´õ.
-HBITMAP hBit_circle;	// µ¿±×¶ó¹Ì¸¦ °¡¸®Å°´Â ºñÆ®¸Ê Çì´õ,
-
-//°¢°¢ ¸¶¿ì½ºÀÇ ÁÂÇ¥
+//ê°ê° ë§ˆìš°ìŠ¤ì˜ ì¢Œí‘œ
 int m_x;
 int m_y;
 
-//¸ðµÎ ¸ÂÃè´ÂÁö ¾Ë¾Æº¸´Â º¯¼ö
+//ëª¨ë‘ ë§žì·„ëŠ”ì§€ ì•Œì•„ë³´ëŠ” ë³€ìˆ˜
 int checked_point = 0;
 
-//Á¦ÇÑ È½¼ö 5È¸
+//ì œí•œ íšŸìˆ˜ 5íšŒ
 
 int failed_point = 5;
 
-//°¢°¢ ¸ÂÃè´ÂÁö ¾Ë¾Æº¸´Â º¯¼ö
-bool checked[3]; //0 : ÀÚºí¶ó´Ï, 1 : Sonata Arctica, 2 : ·¹½ºÆú
-bool istrue; //Á¤´äÀÎ Á¡À» ´©¸£°í ÀÖ´ÂÁö ¾Æ´ÑÁö ±¸º°ÇÏ´Â °Í.
-bool ending; //³¡³µÀ½À» ¾Ë¸²
+//ê°ê° ë§žì·„ëŠ”ì§€ ì•Œì•„ë³´ëŠ” ë³€ìˆ˜
+bool checked[3]; //0 : ìžë¸”ë¼ë‹ˆ, 1 : Sonata Arctica, 2 : ë ˆìŠ¤í´
+bool istrue; //ì •ë‹µì¸ ì ì„ ëˆ„ë¥´ê³  ìžˆëŠ”ì§€ ì•„ë‹Œì§€ êµ¬ë³„í•˜ëŠ” ê²ƒ.
+bool ending; //ëë‚¬ìŒì„ ì•Œë¦¼
 
 int limit_time = 10;
-//Á¦ÇÑ½Ã°£À» ´Ù·ç´Â º¯¼ö.. 1ÀÌ»óÀÇ ÃÊ±â°ªÀ» ÁÖ¾î¾ß µ¹¾Æ°£´Ù.
+//ì œí•œì‹œê°„ì„ ë‹¤ë£¨ëŠ” ë³€ìˆ˜.. 1ì´ìƒì˜ ì´ˆê¸°ê°’ì„ ì£¼ì–´ì•¼ ëŒì•„ê°„ë‹¤.
 
 int start_time_point = timeGetTime();
-//¸· ½ÃÀÛÇÒ¶§ ½Ã°£ ÃøÁ¤...
+//ë§‰ ì‹œìž‘í• ë•Œ ì‹œê°„ ì¸¡ì •...
 
-int temp_time;//(timeGetTime()/1000) - (start_time_point/1000) ¸¦ ´Ù·ç´Â º¯¼ö... ±×³É ½ÃÀÛÀ¸·Î ºÎÅÍ ¸îÃÊ Èê·¶´ÂÁö¸¸ ¾Ë·ÁÁØ´Ù...
+int temp_time;//(timeGetTime()/1000) - (start_time_point/1000) ë¥¼ ë‹¤ë£¨ëŠ” ë³€ìˆ˜... ê·¸ëƒ¥ ì‹œìž‘ìœ¼ë¡œ ë¶€í„° ëª‡ì´ˆ í˜ë €ëŠ”ì§€ë§Œ ì•Œë ¤ì¤€ë‹¤...
 
-//°¢°¢ÀÇ ÁÂÇ¥ ÀÔ·Â
+//ê°ê°ì˜ ì¢Œí‘œ ìž…ë ¥
 
-int point1[4] = { 507, 268, 552, 312 };//ÀÚºí¶ó´Ï
+int point1[4] = { 507, 268, 552, 312 };//ìžë¸”ë¼ë‹ˆ
 
 int point2[4] = { 499, 336, 701, 385 }; //Sonata Arctica
 
-int point3[4] = { 696, 152, 740, 276 }; //·¹½ºÆú
+int point3[4] = { 696, 152, 740, 276 }; //ë ˆìŠ¤í´
 
 
-// Å¬¸¯ ¿©ºÎ¸¦ °¡¸®Å°´Â º¯¼ö.
+// í´ë¦­ ì—¬ë¶€ë¥¼ ê°€ë¦¬í‚¤ëŠ” ë³€ìˆ˜.
 DWORD clicked = 0;
 
-int LoadBmp( char* filename , HBITMAP* ArghBit)	// ±×¸²ÆÄÀÏÀ» ÀÐ¾î¿Â´Ù.
+int LoadBmp( char* filename , HBITMAP* ArghBit)	// ê·¸ë¦¼íŒŒì¼ì„ ì½ì–´ì˜¨ë‹¤.
 {
 
 
@@ -58,7 +58,7 @@ int LoadBmp( char* filename , HBITMAP* ArghBit)	// ±×¸²ÆÄÀÏÀ» ÀÐ¾î¿Â´Ù.
 	BITMAPINFO * ih;
 	PVOID pRaster;
 
-	//ÆÄÀÏÀ» ¿¬´Ù.
+	//íŒŒì¼ì„ ì—°ë‹¤.
 	hFile = CreateFile( filename,GENERIC_READ,0,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
 		NULL);
 	if( hFile == INVALID_HANDLE_VALUE)
@@ -66,15 +66,15 @@ int LoadBmp( char* filename , HBITMAP* ArghBit)	// ±×¸²ÆÄÀÏÀ» ÀÐ¾î¿Â´Ù.
 		return 0;
 	}
 
-	// ÆÄÀÏ Çì´õ¿Í Á¤º¸ ±¸Á¶Ã¼ (»ö»ó Å×ÀÌºí Æ÷ÇÔ ) ¸¦ ÀÐ¾î µéÀÎ´Ù.
+	// íŒŒì¼ í—¤ë”ì™€ ì •ë³´ êµ¬ì¡°ì²´ (ìƒ‰ìƒ í…Œì´ë¸” í¬í•¨ ) ë¥¼ ì½ì–´ ë“¤ì¸ë‹¤.
 	ReadFile(hFile , &fh , sizeof(BITMAPFILEHEADER) , &dwRead, NULL);
 	FileSize = fh.bfOffBits - sizeof(BITMAPFILEHEADER);
 	ih = (BITMAPINFO *)malloc(FileSize);
 	ReadFile(hFile, ih, FileSize, &dwRead, NULL);
 
-	//DIB ¼½¼ÇÀ» ¸¸µé°í ¹öÆÛ ¸Þ¸ð¸®¸¦ ÇÒ´çÇÑ´Ù.
+	//DIB ì„¹ì…˜ì„ ë§Œë“¤ê³  ë²„í¼ ë©”ëª¨ë¦¬ë¥¼ í• ë‹¹í•œë‹¤.
 	hBit = CreateDIBSection(NULL,ih,DIB_RGB_COLORS, &pRaster, NULL , 0);
-	//·¡½ºÅÍ µ¥ÀÌÅÍ¸¦ ÀÐ¾îµéÀÎ´Ù.
+	//ëž˜ìŠ¤í„° ë°ì´í„°ë¥¼ ì½ì–´ë“¤ì¸ë‹¤.
 	ReadFile(hFile , pRaster ,fh.bfSize - fh.bfOffBits, &dwRead , NULL);
 	free(ih);
 	CloseHandle(hFile);
@@ -92,7 +92,7 @@ void Draw()
 	
 	limit_time = 10 - ((timeGetTime()/1000) - (start_time_point/1000));
 
-	RECT crt;	// ÇöÀç Ã¢ÀÇ Á¤º¸¸¦ ÀÐ¾î¿Ã º¯¼ö.
+	RECT crt;	// í˜„ìž¬ ì°½ì˜ ì •ë³´ë¥¼ ì½ì–´ì˜¬ ë³€ìˆ˜.
 	HDC hdc,hMemDC;
 
 	GetClientRect(hWnd,&crt);	
@@ -111,32 +111,32 @@ void Draw()
 
 	hMemDC=CreateCompatibleDC(MemDCBack);
 
-	// ¹è°æÈ­¸éÀÇ ºñÆ®¸Ê Çì´õÀÎ hBit_mapÀ» ¾Æ±î ±¸ÇÑ hMemDC¿¡ ¿¬°áÇÑ´Ù.
+	// ë°°ê²½í™”ë©´ì˜ ë¹„íŠ¸ë§µ í—¤ë”ì¸ hBit_mapì„ ì•„ê¹Œ êµ¬í•œ hMemDCì— ì—°ê²°í•œë‹¤.
 	HBITMAP OldBit_Obj = (HBITMAP)SelectObject(hMemDC,hBit_map);
 
 	BitBlt( MemDCBack , 0 , 0 , 800 , 600 , hMemDC , 0 , 0 , SRCCOPY);
 
-	n = wsprintf(buf, "¸ÂÃá °³¼ö : %d / 3    Life : %d / 5                                                                                                                     ³²Àº ½Ã°£ : %dÃÊ       ", checked_point, failed_point, limit_time);
+	n = wsprintf(buf, "ë§žì¶˜ ê°œìˆ˜ : %d / 3    Life : %d / 5                                                                                                                     ë‚¨ì€ ì‹œê°„ : %dì´ˆ       ", checked_point, failed_point, limit_time);
 	TextOut( MemDCBack, 0, 400, buf, strlen(buf));
 
-	// hMemDC¸¦ Ä³¸¯ÅÍ ºñÆ®¸Ê Çì´õ¿¡ ¹°¸°´Ù.
+	// hMemDCë¥¼ ìºë¦­í„° ë¹„íŠ¸ë§µ í—¤ë”ì— ë¬¼ë¦°ë‹¤.
 	SelectObject(hMemDC, hBit_circle );
 	
 
 	
-	if ( checked[0] == true ) //ÀÚºí¶ó´Ï¿¡ µ¿±×¶ó¹Ì Ç¥½Ã
+	if ( checked[0] == true ) //ìžë¸”ë¼ë‹ˆì— ë™ê·¸ë¼ë¯¸ í‘œì‹œ
 	{
 		
 		TransparentBlt( MemDCBack , 500, 260, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
 		TransparentBlt( MemDCBack , 100, 260, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
 	}
-	if ( checked[1] == true ) //Sonata Arctica¿¡ µ¿±×¶ó¹Ì Ç¥½Ã
+	if ( checked[1] == true ) //Sonata Arcticaì— ë™ê·¸ë¼ë¯¸ í‘œì‹œ
 	{
 
 		TransparentBlt( MemDCBack , 565, 333, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
 		TransparentBlt( MemDCBack , 165, 333, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
 	}
-	if ( checked[2] == true ) //·¹½ºÆú¿¡ µ¿±×¶ó¹Ì Ç¥½Ã
+	if ( checked[2] == true ) //ë ˆìŠ¤í´ì— ë™ê·¸ë¼ë¯¸ í‘œì‹œ
 	{
 		TransparentBlt( MemDCBack , 690, 202, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
 		TransparentBlt( MemDCBack , 290, 202, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
@@ -147,15 +147,15 @@ void Draw()
 
 
 
-	// hMemDC¿¡ ¹°·ÁÀÖ´ø ºñÆ®¸Ê Çì´õ¸¦ ÃÊ±â°ªÀ¸·Î µÇµ¹¸®°í ¼Ò¸ê½ÃÅ²´Ù.
+	// hMemDCì— ë¬¼ë ¤ìžˆë˜ ë¹„íŠ¸ë§µ í—¤ë”ë¥¼ ì´ˆê¸°ê°’ìœ¼ë¡œ ë˜ëŒë¦¬ê³  ì†Œë©¸ì‹œí‚¨ë‹¤.
 	SelectObject(hMemDC,OldBit_Obj);
 	DeleteDC(hMemDC);
 
-	// ¹é¹öÆÛ DCµµ ¿ø·¡ ÃÊ±â°ªÀ¸·Î µÇµ¹¸®°í ¼Ò¸ê½ÃÅ²´Ù.
+	// ë°±ë²„í¼ DCë„ ì›ëž˜ ì´ˆê¸°ê°’ìœ¼ë¡œ ë˜ëŒë¦¬ê³  ì†Œë©¸ì‹œí‚¨ë‹¤.
 	SelectObject(MemDCBack,OldBit_Back);
 	DeleteDC(MemDCBack);
 
-	// ¾Æ¹öÁö»¹ µÇ´Â dc¿´´ø hdc¸¦ ÇØÁ¦½ÃÅ²´Ù.
+	// ì•„ë²„ì§€ë»˜ ë˜ëŠ” dcì˜€ë˜ hdcë¥¼ í•´ì œì‹œí‚¨ë‹¤.
 	ReleaseDC(hWnd,hdc);
 	//InvalidateRect(hWndMain,NULL,FALSE);
 }
@@ -175,7 +175,7 @@ void Flip()
 
 	BitBlt(hdc,0,0,crt.right,crt.bottom,hMemDC,0,0,SRCCOPY);
 
-	// ¿©±â´Â ±×³É ÇØÁ¦ÇÏ´Â ºÎºÐ.
+	// ì—¬ê¸°ëŠ” ê·¸ëƒ¥ í•´ì œí•˜ëŠ” ë¶€ë¶„.
     SelectObject(hMemDC, OldBit);
 
 	DeleteDC(hMemDC);
@@ -185,15 +185,15 @@ void Flip()
 
 void process()
 {
-	Draw();	// ½ÇÁ¦ÀûÀ¸·Î ±×¸®´Â ºÎºÐ.
-	Flip();	// Draw¿¡¼­ Back Buffer·Î ±×¸²µéÀ» ±×·È±â ¶§¹®¿¡, ¿©±â¼­ È­¸é°ú Back Buffer¸¦ ¹Ù²ãÄ¡±â(Flip)ÇÏ´Â ºÎºÐÀÌ´Ù.
+	Draw();	// ì‹¤ì œì ìœ¼ë¡œ ê·¸ë¦¬ëŠ” ë¶€ë¶„.
+	Flip();	// Drawì—ì„œ Back Bufferë¡œ ê·¸ë¦¼ë“¤ì„ ê·¸ë ¸ê¸° ë•Œë¬¸ì—, ì—¬ê¸°ì„œ í™”ë©´ê³¼ Back Bufferë¥¼ ë°”ê¿”ì¹˜ê¸°(Flip)í•˜ëŠ” ë¶€ë¶„ì´ë‹¤.
 }
 
 
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance
 		  ,LPSTR lpszCmdParam,int nCmdShow)
 {
-	// ±¦È÷ µÇµµ¾Ê´Â À©µµ¿ì ±¸Á¶Ã¼ ¼±¾ðºÎºÐÀÌ´Ù. ¾çÀÌ ¸¹´Ù°í ÂÌÁö ¸¶¶ó. °Á ¹«½ÃÇÏ°í ³Ñ¾î°¡¸é µÈ´Ù.
+	// ê´œížˆ ë˜ë„ì•ŠëŠ” ìœˆë„ìš° êµ¬ì¡°ì²´ ì„ ì–¸ë¶€ë¶„ì´ë‹¤. ì–‘ì´ ë§Žë‹¤ê³  ì«„ì§€ ë§ˆë¼. ê± ë¬´ì‹œí•˜ê³  ë„˜ì–´ê°€ë©´ ëœë‹¤.
 
 	MSG Message;
 	WNDCLASS WndClass;
@@ -216,42 +216,42 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance
 		  NULL,(HMENU)NULL,hInstance,NULL);
 	ShowWindow(hWnd,nCmdShow);
 
-	// ±×¸²ÆÄÀÏÀ» ÀÐ¾î¿Â´Ù. ÀÌ¸¦Å×¸é "bg.bmp"¶ó´Â ÆÄÀÏÀ» hBit_mapÀÌ¶ó´Â ºñÆ®¸Ê Çì´õ¿¡ Áý¾î³Ö´Â´Ù´Â ÀÇ¹ÌÀÌ´Ù.
+	// ê·¸ë¦¼íŒŒì¼ì„ ì½ì–´ì˜¨ë‹¤. ì´ë¥¼í…Œë©´ "bg.bmp"ë¼ëŠ” íŒŒì¼ì„ hBit_mapì´ë¼ëŠ” ë¹„íŠ¸ë§µ í—¤ë”ì— ì§‘ì–´ë„£ëŠ”ë‹¤ëŠ” ì˜ë¯¸ì´ë‹¤.
 
 	LoadBmp( "background.bmp", &hBit_map );
 	LoadBmp( "circle.bmp", &hBit_circle );
 
 
 
-	// ±âº» ¸Þ½ÃÁö ·çÇÁÀÔ´Ï´Ù.
+	// ê¸°ë³¸ ë©”ì‹œì§€ ë£¨í”„ìž…ë‹ˆë‹¤.
 
 	while( 1 )
 	{
-		// ¿î¿µÃ¼Á¦·ÎºÎÅÍ ¹º°¡ ¸Þ½ÃÁö°¡ µé¾î¿À¸é ±×°É Ã³¸®ÇÏ°í,
+		// ìš´ì˜ì²´ì œë¡œë¶€í„° ë­”ê°€ ë©”ì‹œì§€ê°€ ë“¤ì–´ì˜¤ë©´ ê·¸ê±¸ ì²˜ë¦¬í•˜ê³ ,
 		if( PeekMessage(&Message , NULL , 0 , 0 , PM_NOREMOVE) )
 		{
 			if(!GetMessage(&Message, NULL, 0, 0)) break ;
 			TranslateMessage(&Message);
 			DispatchMessage(&Message);
 		}
-		// µüÈ÷ ¾ø´Ù¸é ±×¸²À» ±×¸®´Â µîÀÇ µýÁþÀ» ÇÑ´Ù.
+		// ë”±ížˆ ì—†ë‹¤ë©´ ê·¸ë¦¼ì„ ê·¸ë¦¬ëŠ” ë“±ì˜ ë”´ì§“ì„ í•œë‹¤.
 		else
 		{
 			process();
 		}
-		if ( checked_point == 3 ) // ´Ù ¸ÂÃß¸é ÇÁ·Î±×·¥ Á¾·á
+		if ( checked_point == 3 ) // ë‹¤ ë§žì¶”ë©´ í”„ë¡œê·¸ëž¨ ì¢…ë£Œ
 		{
 			ending = true;
 		}
 
-		if ( failed_point == 0)// ´Ù Æ²·Áµµ ÇÁ·Î±×·¥ Á¾·á
+		if ( failed_point == 0)// ë‹¤ í‹€ë ¤ë„ í”„ë¡œê·¸ëž¨ ì¢…ë£Œ
 		{
 			ending = true;
 		}
 
 		if ( ending == true && checked_point == 3 )
 		{
-			MessageBox(hWnd, TEXT("ÃàÇÏÇÕ´Ï´Ù. ¸ðµÎ ¸ÂÃß¼Ì½À´Ï´Ù."),
+			MessageBox(hWnd, TEXT("ì¶•í•˜í•©ë‹ˆë‹¤. ëª¨ë‘ ë§žì¶”ì…¨ìŠµë‹ˆë‹¤."),
 			TEXT("Cleared!!"), MB_OK);
 			break;
 		}
@@ -264,7 +264,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance
 
 		if ( limit_time == 0 )
 		{
-			MessageBox(hWnd, TEXT("Àåºñ¸¦ Á¤ÁöÇÕ´Ï´Ù."),
+			MessageBox(hWnd, TEXT("ìž¥ë¹„ë¥¼ ì •ì§€í•©ë‹ˆë‹¤."),
 			TEXT("Time Over!"), MB_OK);
 			break;
 		}
@@ -284,7 +284,7 @@ void check_click_point()
 			checked[0] = true;
 		}
 		istrue = true;
-	}//ÀÚºí¶ó´Ï Ã£À»¶§ - ´Ù¸¥ ±×¸²¿¡¼­
+	}//ìžë¸”ë¼ë‹ˆ ì°¾ì„ë•Œ - ë‹¤ë¥¸ ê·¸ë¦¼ì—ì„œ
 
 	else if ( m_x >= point2[0] && m_x <= point2[2] && m_y >= point2[1] && m_y <= point2[3] )
 	{
@@ -294,7 +294,7 @@ void check_click_point()
 			checked[1] = true;
 		}
 		istrue = true;
-	}//Sonata Arctica Ã£À»¶§ - ´Ù¸¥ ±×¸²¿¡¼­
+	}//Sonata Arctica ì°¾ì„ë•Œ - ë‹¤ë¥¸ ê·¸ë¦¼ì—ì„œ
 
 	else if ( m_x >= point3[0] && m_x <= point3[2] && m_y >= point3[1] && m_y <= point3[3] )
 	{
@@ -304,7 +304,7 @@ void check_click_point()
 			checked[2] = true;
 		}
 		istrue = true;
-	}//·¹½ºÆú Ã£À»¶§ - ´Ù¸¥ ±×¸²¿¡¼­
+	}//ë ˆìŠ¤í´ ì°¾ì„ë•Œ - ë‹¤ë¥¸ ê·¸ë¦¼ì—ì„œ
 	
 	else if ( m_x >= point1[0] - 400 && m_x <= point1[2] - 400 && m_y >= point1[1] && m_y <= point1[3] )
 	{
@@ -314,7 +314,7 @@ void check_click_point()
 			checked[0] = true;
 		}
 		istrue = true;
-	}//ÀÚºí¶ó´Ï Ã£À»¶§ - ¿øº» ±×¸²¿¡¼­
+	}//ìžë¸”ë¼ë‹ˆ ì°¾ì„ë•Œ - ì›ë³¸ ê·¸ë¦¼ì—ì„œ
 
 	else if ( m_x >= point2[0] - 400 && m_x <= point2[2] - 400 && m_y >= point2[1] && m_y <= point2[3] )
 	{
@@ -324,7 +324,7 @@ void check_click_point()
 			checked[1] = true;
 		}
 		istrue = true;
-	}//Sonata Arctica Ã£À»¶§ - ¿øº» ±×¸²¿¡¼­
+	}//Sonata Arctica ì°¾ì„ë•Œ - ì›ë³¸ ê·¸ë¦¼ì—ì„œ
 
 	else if ( m_x >= point3[0] - 400 && m_x <= point3[2] - 400 && m_y >= point3[1] && m_y <= point3[3] )
 	{
@@ -334,7 +334,7 @@ void check_click_point()
 			checked[2] = true;
 		}
 		istrue = true;
-	}//·¹½ºÆú Ã£À»¶§ - ¿øº» ±×¸²¿¡¼­
+	}//ë ˆìŠ¤í´ ì°¾ì„ë•Œ - ì›ë³¸ ê·¸ë¦¼ì—ì„œ
 
 	else
 	{
