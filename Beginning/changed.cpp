@@ -1,55 +1,105 @@
-
+ï»¿
+//**************************************************************//
+//          Copyright (c) 2010  SangHyeon Kim					//
+//			License : MIT										//
+//			Title : í‹€ë¦°ê·¸ë¦¼ ì°¾ê¸°								//
+//																//
+//**************************************************************//
 #include <windows.h>
+#include <stdlib.h>
+#include <time.h>
+#include<MMSystem.h>
+#pragma comment(lib"Winmm.lib")
+#include "item.h"
+#include "Digitalv.h"
 
-// Àü¿ª º¯¼ö
-LRESULT CALLBACK WndProc(HWND,UINT,WPARAM,LPARAM);
+//
+#define speed 8;
+//
+
+
+//í”Œë ˆì´ì–´ íƒ€ì¼ì˜ í¬ê¸° 26 * 28 //104*112 31*32  124*128 
+//í”¼ì¸„ : 22 * 25 // 88*25 (0,128ì‹œì‘) // ìˆ«ì : 6*10 ë¦¬ë³¸ /16*15
+
+//ì–¼êµ´  : 144*97 (0, 173 ì‹œì‘)
+
+// ì „ì—­ ë³€ìˆ˜
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 HINSTANCE g_hInst;
-LPSTR lpszClass="¹Ù²ï±×¸²Ã£±â Made By. ±è»óÇö";
+LPSTR lpszClass = "ì ìëŠ” ìˆ²ì†ì˜ í”¼ì¸„";
 HWND hWnd;
 
-HBITMAP hBit; // Back Buffer°¡ µÉ ºñÆ®¸ÊÇì´õ.
-HBITMAP hBit_map;	// ¹è°æÈ­¸éÀ» °¡¸®Å°´Â ºñÆ®¸ÊÇì´õ.
-HBITMAP hBit_circle;	// µ¿±×¶ó¹Ì¸¦ °¡¸®Å°´Â ºñÆ®¸Ê Çì´õ,
+HBITMAP hBit; // Back Bufferê°€ ë  ë¹„íŠ¸ë§µí—¤ë”.
+HBITMAP hBit_map;	// ë°°ê²½í™”ë©´ì„ ê°€ë¦¬í‚¤ëŠ” ë¹„íŠ¸ë§µí—¤ë”.
+HBITMAP hBit_player;	// í”Œë ˆì´ì–´ íƒ€ì¼ì…‹ì„ ê°€ë¦¬í‚¤ëŠ” ë¹„íŠ¸ë§µ í—¤ë”
+HBITMAP hBit_mt; //ë§µ íƒ€ì¼(ê°œë°œìš©)
 
-//°¢°¢ ¸¶¿ì½ºÀÇ ÁÂÇ¥
-int m_x;
-int m_y;
+MCI_OPEN_PARMS m_mciOpenParms;
+MCI_PLAY_PARMS m_mciPlayParms;
+DWORD m_dwDeviceID;
+MCI_OPEN_PARMS mciOpen;
+MCI_PLAY_PARMS mciPlay;
 
-//¸ğµÎ ¸ÂÃè´ÂÁö ¾Ë¾Æº¸´Â º¯¼ö
+int dwID;
+//?? ë¬´ìŠ¨ ë³€ìˆ˜ì§€?
+
+int gameState = 0;
+BOOL KeyBuffer[256];
+//í‚¤ë²„í¼
+
+BOOL Hint = FALSE;
+
+#define Playtime 1000;
+int default_time = 35;
+int limit_time = Playtime;
+int start_time_point = 0;
+//ì œí•œì‹œê°„ì„ ë‹¤ë£¨ëŠ” ë³€ìˆ˜.. 1ì´ìƒì˜ ì´ˆê¸°ê°’ì„ ì£¼ì–´ì•¼ ëŒì•„ê°„ë‹¤.
+
+///ì•„ë˜ ë³€ìˆ˜ëŠ” ì¶”í›„ ë³€ê²½í•´ì•¼í•  ë³€ìˆ˜(ì‚­ì œ ë³€ê²½ ì˜ˆìƒ)
+//ëª¨ë‘ ë§ì·„ëŠ”ì§€ ì•Œì•„ë³´ëŠ” ë³€ìˆ˜
 int checked_point = 0;
 
-//Á¦ÇÑ È½¼ö 5È¸
+//ì œí•œ íšŸìˆ˜ 5íšŒ
 
 int failed_point = 5;
 
-//°¢°¢ ¸ÂÃè´ÂÁö ¾Ë¾Æº¸´Â º¯¼ö
-bool checked[3]; //0 : ÀÚºí¶ó´Ï, 1 : Sonata Arctica, 2 : ·¹½ºÆú
-bool istrue; //Á¤´äÀÎ Á¡À» ´©¸£°í ÀÖ´ÂÁö ¾Æ´ÑÁö ±¸º°ÇÏ´Â °Í.
-bool ending; //³¡³µÀ½À» ¾Ë¸²
+//ê°ê° ë§ì·„ëŠ”ì§€ ì•Œì•„ë³´ëŠ” ë³€ìˆ˜@
 
-int limit_time = 10;
-//Á¦ÇÑ½Ã°£À» ´Ù·ç´Â º¯¼ö.. 1ÀÌ»óÀÇ ÃÊ±â°ªÀ» ÁÖ¾î¾ß µ¹¾Æ°£´Ù.
-
-int start_time_point = timeGetTime();
-//¸· ½ÃÀÛÇÒ¶§ ½Ã°£ ÃøÁ¤...
-
-int temp_time;//(timeGetTime()/1000) - (start_time_point/1000) ¸¦ ´Ù·ç´Â º¯¼ö... ±×³É ½ÃÀÛÀ¸·Î ºÎÅÍ ¸îÃÊ Èê·¶´ÂÁö¸¸ ¾Ë·ÁÁØ´Ù...
-
-//°¢°¢ÀÇ ÁÂÇ¥ ÀÔ·Â
-
-int point1[4] = { 507, 268, 552, 312 };//ÀÚºí¶ó´Ï
-
-int point2[4] = { 499, 336, 701, 385 }; //Sonata Arctica
-
-int point3[4] = { 696, 152, 740, 276 }; //·¹½ºÆú
+bool istrue; //ì •ë‹µì¸ ì ì„ ëˆ„ë¥´ê³  ìˆëŠ”ì§€ ì•„ë‹Œì§€ êµ¬ë³„í•˜ëŠ” ê²ƒ.
+bool ending; //ëë‚¬ìŒì„ ì•Œë¦¼
+			 ///ìœ„ì˜ ë³€ìˆ˜ëŠ” ì¶”í›„ ë³€ê²½í•´ì•¼í•  ë³€ìˆ˜(ì‚­ì œ ë³€ê²½ ì˜ˆìƒ)
 
 
-// Å¬¸¯ ¿©ºÎ¸¦ °¡¸®Å°´Â º¯¼ö.
-DWORD clicked = 0;
+			 //ë§µ ë¸”ë¡.
+Item gItem;
 
-int LoadBmp( char* filename , HBITMAP* ArghBit)	// ±×¸²ÆÄÀÏÀ» ÀĞ¾î¿Â´Ù.
+
+void calScore() {
+
+	for (int i = 0; i <20; i++)
+		for (int j = 0; j < 20; j++) {
+
+			if (mapBlock[j][i] == 6) {
+	
+				mapBlock[j][i] = 5;
+			}
+			if (mapBlock[j][i] == 7) {
+	
+				mapBlock[j][i] = 5;
+			}
+
+			if (mapBlock[j][i] == 3) {
+
+				mapBlock[j][i] = 3;
+			}
+
+		}
+
+
+}
+
+int LoadBmp(char* filename, HBITMAP* ArghBit)	// ê·¸ë¦¼íŒŒì¼ì„ ì½ì–´ì˜¨ë‹¤.
 {
-
 
 	HANDLE hFile;
 	HBITMAP hBit;
@@ -58,24 +108,24 @@ int LoadBmp( char* filename , HBITMAP* ArghBit)	// ±×¸²ÆÄÀÏÀ» ÀĞ¾î¿Â´Ù.
 	BITMAPINFO * ih;
 	PVOID pRaster;
 
-	//ÆÄÀÏÀ» ¿¬´Ù.
-	hFile = CreateFile( filename,GENERIC_READ,0,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
+	//íŒŒì¼ì„ ì—°ë‹¤.
+	hFile = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
 		NULL);
-	if( hFile == INVALID_HANDLE_VALUE)
+	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		return 0;
 	}
 
-	// ÆÄÀÏ Çì´õ¿Í Á¤º¸ ±¸Á¶Ã¼ (»ö»ó Å×ÀÌºí Æ÷ÇÔ ) ¸¦ ÀĞ¾î µéÀÎ´Ù.
-	ReadFile(hFile , &fh , sizeof(BITMAPFILEHEADER) , &dwRead, NULL);
+	// íŒŒì¼ í—¤ë”ì™€ ì •ë³´ êµ¬ì¡°ì²´ (ìƒ‰ìƒ í…Œì´ë¸” í¬í•¨ ) ë¥¼ ì½ì–´ ë“¤ì¸ë‹¤.
+	ReadFile(hFile, &fh, sizeof(BITMAPFILEHEADER), &dwRead, NULL);
 	FileSize = fh.bfOffBits - sizeof(BITMAPFILEHEADER);
 	ih = (BITMAPINFO *)malloc(FileSize);
 	ReadFile(hFile, ih, FileSize, &dwRead, NULL);
 
-	//DIB ¼½¼ÇÀ» ¸¸µé°í ¹öÆÛ ¸Ş¸ğ¸®¸¦ ÇÒ´çÇÑ´Ù.
-	hBit = CreateDIBSection(NULL,ih,DIB_RGB_COLORS, &pRaster, NULL , 0);
-	//·¡½ºÅÍ µ¥ÀÌÅÍ¸¦ ÀĞ¾îµéÀÎ´Ù.
-	ReadFile(hFile , pRaster ,fh.bfSize - fh.bfOffBits, &dwRead , NULL);
+	//DIB ì„¹ì…˜ì„ ë§Œë“¤ê³  ë²„í¼ ë©”ëª¨ë¦¬ë¥¼ í• ë‹¹í•œë‹¤.
+	hBit = CreateDIBSection(NULL, ih, DIB_RGB_COLORS, &pRaster, NULL, 0);
+	//ë˜ìŠ¤í„° ë°ì´í„°ë¥¼ ì½ì–´ë“¤ì¸ë‹¤.
+	ReadFile(hFile, pRaster, fh.bfSize - fh.bfOffBits, &dwRead, NULL);
 	free(ih);
 	CloseHandle(hFile);
 
@@ -84,285 +134,708 @@ int LoadBmp( char* filename , HBITMAP* ArghBit)	// ±×¸²ÆÄÀÏÀ» ÀĞ¾î¿Â´Ù.
 	return 1;
 }
 
+
+
+void WarpItem() {
+	int l = rand() % 3;//ì •ë‹µ ìœ„ì¹˜ê°€ ì €ì¥ë˜ì–´ìˆëŠ” ê³³ì¤‘ ì•„ë¬´ê³³ì´ë‚˜ ìƒì„±
+
+	if (player[0].curTemp == 1)//1pê°€ 1ë²ˆ íšë“ì‹œ ì´ë™
+	{
+		player[0].posX = answer[l].posX + 128;//ì •ë‹µì¢Œí‘œë¡œ ì´ë™ë¡œ ì´ë™
+		player[0].posY = answer[l].posY + 128;
+		gItem.visiableOnGame = false;
+		player[0].curTemp = -1;//ì´ë™ í›„ ì•„ë¬´ê²ƒë„ ì–»ì§€ ëª»í•œ -1ìƒíƒœë¡œ 
+	}
+	if (player[1].curTemp == 1)
+	{
+		player[1].posX = answer[l].posX + 128;
+		player[1].posY = answer[l].posY + 128;
+		gItem.visiableOnGame = false;
+		player[1].curTemp = -1;
+	}
+}
+
+
+
+void setFlaganswer(int x, int y, int input) {
+	
+	
+	if (mapBlock[y][x] == 1) {
+		if (mapBlock[y - 1][x - 1] == 1) {
+			x = x;
+			y = y;
+		}
+		else if (mapBlock[y + 1][x + 1] == 1) {
+				x = x+1;
+				y = y+1;
+			}		
+		else if (mapBlock[y - 1][x + 1] == 1) {
+			x = x + 1;
+			y = y;
+		}
+		else if (mapBlock[y + 1][x - 1] == 1) {
+			x = x;
+			y = y + 1;
+		}
+
+
+		mapBlock[y][x] = input;
+		mapBlock[y][x - 1] = input;
+		mapBlock[y - 1][x] = input;
+		mapBlock[y - 1][x - 1] = input;
+
+
+	}
+	
+	for (int i = 0; i < 3; i++) {
+
+		if (answer[i].curTemp == x && answer[i].curStatus == y) {
+			answer[i].score = input;
+			mapBlock[y][x] = input;
+			mapBlock[y][x - 1] = input;
+			mapBlock[y - 1][x] = input;
+			mapBlock[y - 1][x - 1] = input;
+
+		}
+
+	}
+
+}
+
+void checkScore() {
+
+	for (int i = 0; i < 3; i++) {
+
+		if (answer[i].score == 6) {
+			player[0].score += 1;
+			player[0].curTemp = 5;
+			answer[i].score = 1;
+
+		}
+		else if (answer[i].score == 7) {
+			player[1].score += 1;
+			answer[i].score = 2;
+		}
+	
+
+	}
+
+	int check = 0;
+	for (int i = 0; i < 3; i++) {
+
+		if (flag[0][i].curTemp == 1) check++;
+		if (flag[1][i].curTemp == 1) check++;
+	}
+
+	if (check > 5) gameState = 1;
+
+
+}
+
+
+void charMove(int &p_x, int &p_y, int head) {
+	int temp = 1;
+	
+	if ((detectBlock(p_x, p_y) > 2)) temp = -1;
+
+	switch (head) {
+
+	case 1:
+		p_x -= temp * speed;
+		break;
+	case 3:
+		p_x += temp * speed;
+		break;
+	case 2:
+		p_y -= temp * speed;
+		break;
+	case 0:
+		p_y += temp * speed;
+		break;
+
+	}
+
+	if (p_x < 40) p_x = 40;
+	else if (p_y < 40) p_y = 40;
+	else if (p_x > 600) p_x = 600;
+	else if (p_y > 600) p_y = 600;
+
+	if ((detectBlock(p_x, p_y) > 2)) charMove(p_x, p_y, head);
+}
+
+
+
+void loop() {
+
+	if (KeyBuffer[VK_LEFT]) {
+		player[0].curStatus = 1;
+		charMove(player[0].posX, player[0].posY, player[0].curStatus);
+	}
+	if (KeyBuffer[VK_RIGHT]) {
+		player[0].curStatus = 3;
+		charMove(player[0].posX, player[0].posY, player[0].curStatus);
+	}
+	if (KeyBuffer[VK_UP]) {
+
+		player[0].curStatus = 2;
+		charMove(player[0].posX, player[0].posY, player[0].curStatus);
+	}
+	if (KeyBuffer[VK_DOWN]) {
+
+		player[0].curStatus = 0;
+		charMove(player[0].posX, player[0].posY, player[0].curStatus);
+	}
+	//1P í‚¤ë³´ë“œ ì…ë ¥
+
+	if (KeyBuffer[0x41] && player[1].curTemp != 0) {
+
+		player[1].curStatus = 1;
+		charMove(player[1].posX, player[1].posY, player[1].curStatus);
+	}
+	if (KeyBuffer[0x44] && player[1].curTemp != 0) {
+
+		player[1].curStatus = 3;
+		charMove(player[1].posX, player[1].posY, player[1].curStatus);
+
+	}
+	if (KeyBuffer[0x57] && player[1].curTemp != 0) {
+
+		player[1].curStatus = 2;
+		charMove(player[1].posX, player[1].posY, player[1].curStatus);
+
+	}
+	if (KeyBuffer[0x53] && player[1].curTemp != 0) {
+
+		player[1].curStatus = 0;
+		charMove(player[1].posX, player[1].posY, player[1].curStatus);
+	}
+	//2P í‚¤ë³´ë“œ ì…ë ¥
+
+
+	player[0].curBlock = detectBlock(player[0].posX, player[0].posY);
+	player[1].curBlock = detectBlock(player[1].posX, player[1].posY);
+	//í”Œë ˆì´ì–´ê°€ í˜„ì¬ ì–´ë–¤ ë§µë¸”ë¡ ìœ„ì— ìœ„ì¹˜í•˜ëŠ”ì§€ ë§¤ë²ˆ ê³„ì‚°í•´ì„œ ì €ì¥í•œë‹¤.
+
+
+
+	//ì•„ì´í…œ ì¶©ëŒ. ì–´ë””ë‘¬ì•¼í• ì§€ ëª°ë¼ì„œ byLee
+	if (gItem.visiableOnGame == true) {
+		//itM=1p  itN=2p
+
+		//-1,0,1ë°˜í™˜//-1=ì•„ì´í…œ ì•ˆì–»ìŒ  0=ìƒëŒ€ë°© ëª»ì›€ì§ì—ê²Œ í•˜ëŠ” í…œ ì–»ìŒ  1=ì •ë‹µê·¼ì²˜ë¡œ ì›Œí”„í…œ ì–»ìŒ
+
+		if (player[0].curBlock == 2) player[0].curTemp = gItem.getKindOfItem();
+		if (player[1].curBlock == 2) player[1].curTemp = gItem.getKindOfItem();
+
+		if (player[0].curTemp == 1 || player[1].curTemp == 1) {
+			WarpItem();
+		}
+		if (player[0].curTemp != -1 || player[1].curTemp != -1) {
+			gItem.visiableOnGame = false;
+		}
+	}
+
+
+}
+
+
+void stateChecker() {
+
+
+	if (player[0].score > player[1].score) {
+		player[0].curTemp = 5;
+		player[1].curTemp = 6;
+	}
+	else if (player[0].score < player[1].score) {
+		player[0].curTemp = 6;
+		player[1].curTemp = 5;
+	}
+	else {	
+		player[0].curTemp = 4;
+		player[1].curTemp = 4;
+	}
+
+	
+}
+
+
+
+//í˜„ì¬ ê·¸ë¦¼ ìƒí™©
 void Draw()
 {
 	
-	char n, buf[1000];
-	int temp_time = (timeGetTime()/1000) - (start_time_point/1000);
-	
-	limit_time = 10 - ((timeGetTime()/1000) - (start_time_point/1000));
+	if(gameState == 1) stateChecker();
 
-	RECT crt;	// ÇöÀç Ã¢ÀÇ Á¤º¸¸¦ ÀĞ¾î¿Ã º¯¼ö.
-	HDC hdc,hMemDC;
+	RECT crt;	// í˜„ì¬ ì°½ì˜ ì •ë³´ë¥¼ ì½ì–´ì˜¬ ë³€ìˆ˜.
+	HDC hdc, hMemDC, hMemDC2;	// ì„ì‹œë¡œ ì¶”ê°€í•œ hMemDC2ë³€ìˆ˜
+	GetClientRect(hWnd, &crt);
+	hdc = GetDC(hWnd);
 
-	GetClientRect(hWnd,&crt);	
-	hdc=GetDC(hWnd);	
-
-
-	if (hBit==NULL) {
-		hBit=CreateCompatibleBitmap(hdc,crt.right,crt.bottom);
+	if (hBit == NULL) {
+		hBit = CreateCompatibleBitmap(hdc, crt.right, crt.bottom);
 	}
 
 
-	HDC MemDCBack = CreateCompatibleDC( hdc );
-
+	HDC MemDCBack = CreateCompatibleDC(hdc);
 
 	HBITMAP OldBit_Back = (HBITMAP)SelectObject(MemDCBack, hBit);
 
-	hMemDC=CreateCompatibleDC(MemDCBack);
+	hMemDC = CreateCompatibleDC(MemDCBack);
+	hMemDC2 = CreateCompatibleDC(MemDCBack);
 
-	// ¹è°æÈ­¸éÀÇ ºñÆ®¸Ê Çì´õÀÎ hBit_mapÀ» ¾Æ±î ±¸ÇÑ hMemDC¿¡ ¿¬°áÇÑ´Ù.
-	HBITMAP OldBit_Obj = (HBITMAP)SelectObject(hMemDC,hBit_map);
 
-	BitBlt( MemDCBack , 0 , 0 , 800 , 600 , hMemDC , 0 , 0 , SRCCOPY);
 
-	n = wsprintf(buf, "¸ÂÃá °³¼ö : %d / 3    Life : %d / 5                                                                                                                     ³²Àº ½Ã°£ : %dÃÊ       ", checked_point, failed_point, limit_time);
-	TextOut( MemDCBack, 0, 400, buf, strlen(buf));
+	// hMemDCë¥¼ ìºë¦­í„° ë¹„íŠ¸ë§µ í—¤ë”ì— ë¬¼ë¦°ë‹¤.
+	SelectObject(hMemDC2, hBit_player);
 
-	// hMemDC¸¦ Ä³¸¯ÅÍ ºñÆ®¸Ê Çì´õ¿¡ ¹°¸°´Ù.
-	SelectObject(hMemDC, hBit_circle );
+
+
+
+
+	// ë°°ê²½í™”ë©´ì˜ ë¹„íŠ¸ë§µ í—¤ë”ì¸ hBit_mapì„ ì•„ê¹Œ êµ¬í•œ hMemDCì— ì—°ê²°í•œë‹¤.
+	HBITMAP OldBit_Obj = (HBITMAP)SelectObject(hMemDC, hBit_map);//hBit_map);
+
+
+	BitBlt(MemDCBack, 0, 0, 640, 750, hMemDC, 0, 0, SRCCOPY);
+
+	static int frame = 0;
+	frame++;
+	//ì£¼ì¸ê³µ ì›€ì§ì„ ì£¼ëŠ” ë¶€ë¶„. ê°œì„ í•´ì•¼í•¨
+
+
+	static int b = 0;
+	if (frame % 10 == 0) {
+		b++;
+		b = b % 4;
+	}
+	TransparentBlt(MemDCBack, player[0].posX - 26, player[0].posY - 28, 52, 56, hMemDC2, 26 * b, 28 * player[0].curStatus, 26, 28, RGB(100, 0, 100));
+	//1p
+	TransparentBlt(MemDCBack, player[1].posX - 26, player[1].posY - 28, 62, 64, hMemDC2, 104 + 31 * b, 32 * player[1].curStatus, 31, 32, RGB(100, 0, 100));
+	//2p
+	//ì£¼ì¸ê³µ ì›€ì§ì„ ì£¼ëŠ” ë¶€ë¶„. ê°œì„ í•´ì•¼í•¨
+
+
+	// 22 * 25 // 88*25 (0,128ì‹œì‘) 29*20
+
+	if (limit_time > 30) {
+		for (int i = 0; i < 3; i++) {
+			if (mapBlock[answer[i].curStatus][answer[i].curTemp] == 1) TransparentBlt(MemDCBack, 32 * answer[i].curTemp - 16  , 32 * answer[i].curStatus - 32, 44, 50, hMemDC2, b * 22, 128, 22, 25, RGB(100, 0, 100));
+		}
 	
 
+	}
+
+	//ê¹ƒë°œ ê·¸ë¦¬ê¸° ì‹œì‘
+	for (int i = 0; i < 2; i++)
+		for (int j = 0; j < 3; j++) {
+			if (flag[i][j].curTemp != 0) {
+				if (flag[i][j].curStatus == 1) {
+					TransparentBlt(MemDCBack, flag[i][j].posX, flag[i][j].posY - 48, 22, 48, hMemDC2, 167, 139, 22, 48, RGB(100, 0, 100));
+					TransparentBlt(MemDCBack, flag[i][j].posX - 29, flag[i][j].posY - 20, 58, 40, hMemDC2, (b % 2) * 29, 153, 29, 20, RGB(100, 0, 100));
+				}
+				else TransparentBlt(MemDCBack, flag[i][j].posX, flag[i][j].posY - 48, 22, 48, hMemDC2, 145, 139, 22, 48, RGB(100, 0, 100));
+			}
+		}
+	//ê¹ƒë°œ ê·¸ë¦¬ê¸° ë
+
+
+	//í•˜ë‹¨ í‘œì‹œ ì˜ì—­
+
+	if (limit_time < 31 && limit_time>-1 && gameState == 0) {
+		TransparentBlt(MemDCBack, 292, 670, 28, 40, hMemDC2, 87 + 6 * int(limit_time / 10), 128, 7, 10, RGB(100, 0, 100)); //129
+		TransparentBlt(MemDCBack, 320, 670, 28, 40, hMemDC2, 87 + 6 * int(limit_time % 10), 128, 7, 10, RGB(100, 0, 100)); //129
+	}
+	else if (gameState == 1) TransparentBlt(MemDCBack, 272, 670, 100, 36, hMemDC2, 145, 216, 82, 31, RGB(100, 0, 100));
+	else TransparentBlt(MemDCBack, 292, 670, 60, 39, hMemDC2, 145, 187, 45, 29, RGB(100, 0, 100)); //ì¤€ë¹„
 	
-	if ( checked[0] == true ) //ÀÚºí¶ó´Ï¿¡ µ¿±×¶ó¹Ì Ç¥½Ã
-	{
-		
-		TransparentBlt( MemDCBack , 500, 260, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
-		TransparentBlt( MemDCBack , 100, 260, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
+	
+	
+	//ìˆ«ì í‘œì‹œ
+
+
+	//ì–¼êµ´ í‘œì‹œ
+
+
+	if (player[0].curTemp == 5) {
+		TransparentBlt(MemDCBack, 0, 640, 100, 100, hMemDC2, 48, 173, 48, 48, RGB(100, 0, 100));
+		if (b % 40 == 0 && gameState == 0) player[0].curTemp = -1;
 	}
-	if ( checked[1] == true ) //Sonata Arctica¿¡ µ¿±×¶ó¹Ì Ç¥½Ã
-	{
+	else if(player[0].curTemp == 6) TransparentBlt(MemDCBack, 0, 640, 100, 100, hMemDC2, 96, 173, 48, 48, RGB(100, 0, 100));
+	else TransparentBlt(MemDCBack, 0, 640, 100, 100, hMemDC2, 0, 173, 48, 48, RGB(100, 0, 100));
+	//í”¼ì¹´ì¸„
 
-		TransparentBlt( MemDCBack , 565, 333, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
-		TransparentBlt( MemDCBack , 165, 333, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
+
+	
+
+	if (player[1].curTemp == 5) {
+		TransparentBlt(MemDCBack, 540, 640, 100, 100, hMemDC2, 48, 221, 48, 48, RGB(100, 0, 100));
+		if (b % 40 == 0 && gameState == 0) player[1].curTemp = -1;
 	}
-	if ( checked[2] == true ) //·¹½ºÆú¿¡ µ¿±×¶ó¹Ì Ç¥½Ã
-	{
-		TransparentBlt( MemDCBack , 690, 202, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
-		TransparentBlt( MemDCBack , 290, 202, 64, 64, hMemDC, 0, 0, 64, 64, RGB(100,0,100) );
+	else if (player[1].curTemp == 6) TransparentBlt(MemDCBack, 540, 640, 100, 100, hMemDC2, 96, 221, 48, 48, RGB(100, 0, 100));
+	else TransparentBlt(MemDCBack, 540, 640, 100, 100, hMemDC2, 0, 221, 48, 48, RGB(100, 0, 100));
+
+
+	//ë¼ì´ì¸„
+	//ì–¼êµ´ í‘œì‹œ
+
+
+	for (int i = 0; i < player[0].score; i++) {
+		TransparentBlt(MemDCBack, 120 + 42 * i, 675, 32, 30, hMemDC2, 113, 139, 16, 15, RGB(100, 0, 100));
+	}
+	for (int i = 0; i < player[1].score; i++) {
+		TransparentBlt(MemDCBack, 490 - 42 * i, 675, 32, 30, hMemDC2, 129, 139, 16, 15, RGB(100, 0, 100));
+	}
+			
+	
+	// ë¦¬ë³¸í‘œì‹œ
+
+
+	//í•˜ë‹¨ í‘œì‹œ ì˜ì—­
+	
+	
+	//ì„ ë¬¼ìƒì í‘œì‹œ
+	if (gItem.visiableOnGame == true) {
+
+		TransparentBlt(MemDCBack, gItem.posX * 32 -9, gItem.posY * 32 - 8, 50, 48, hMemDC2, 88, 139, 25, 24, RGB(100, 0, 100));
 	}
 
-
-	//limit_time = ((timeGetTime()/1000) - (start_time_point/1000));
-
+	//ë¬¼ì²´í‘œì‹œ
 
 
-	// hMemDC¿¡ ¹°·ÁÀÖ´ø ºñÆ®¸Ê Çì´õ¸¦ ÃÊ±â°ªÀ¸·Î µÇµ¹¸®°í ¼Ò¸ê½ÃÅ²´Ù.
-	SelectObject(hMemDC,OldBit_Obj);
+	// hMemDCì— ë¬¼ë ¤ìˆë˜ ë¹„íŠ¸ë§µ í—¤ë”ë¥¼ ì´ˆê¸°ê°’ìœ¼ë¡œ ë˜ëŒë¦¬ê³  ì†Œë©¸ì‹œí‚¨ë‹¤.
+	SelectObject(hMemDC, OldBit_Obj);
+
 	DeleteDC(hMemDC);
+	DeleteDC(hMemDC2);
 
-	// ¹é¹öÆÛ DCµµ ¿ø·¡ ÃÊ±â°ªÀ¸·Î µÇµ¹¸®°í ¼Ò¸ê½ÃÅ²´Ù.
-	SelectObject(MemDCBack,OldBit_Back);
+
+	// ë°±ë²„í¼ DCë„ ì›ë˜ ì´ˆê¸°ê°’ìœ¼ë¡œ ë˜ëŒë¦¬ê³  ì†Œë©¸ì‹œí‚¨ë‹¤.
+	SelectObject(MemDCBack, OldBit_Back);
 	DeleteDC(MemDCBack);
 
-	// ¾Æ¹öÁö»¹ µÇ´Â dc¿´´ø hdc¸¦ ÇØÁ¦½ÃÅ²´Ù.
-	ReleaseDC(hWnd,hdc);
+	// ì•„ë²„ì§€ë»˜ ë˜ëŠ” dcì˜€ë˜ hdcë¥¼ í•´ì œì‹œí‚¨ë‹¤.
+	ReleaseDC(hWnd, hdc);
 	//InvalidateRect(hWndMain,NULL,FALSE);
+
 }
 
 
 void Flip()
 {
 
-	HDC hdc = GetDC( hWnd );
-	HDC hMemDC=CreateCompatibleDC(hdc);
+	HDC hdc = GetDC(hWnd);
+	HDC hMemDC = CreateCompatibleDC(hdc);
 
 	RECT crt;
-	GetClientRect(hWnd,&crt);	
+	GetClientRect(hWnd, &crt);
 
 
-    HBITMAP OldBit=(HBITMAP)SelectObject(hMemDC, hBit);
+	HBITMAP OldBit = (HBITMAP)SelectObject(hMemDC, hBit);
 
-	BitBlt(hdc,0,0,crt.right,crt.bottom,hMemDC,0,0,SRCCOPY);
+	BitBlt(hdc, 0, 0, crt.right, crt.bottom, hMemDC, 0, 0, SRCCOPY);
 
-	// ¿©±â´Â ±×³É ÇØÁ¦ÇÏ´Â ºÎºĞ.
-    SelectObject(hMemDC, OldBit);
+	// ì—¬ê¸°ëŠ” ê·¸ëƒ¥ í•´ì œí•˜ëŠ” ë¶€ë¶„.
+	SelectObject(hMemDC, OldBit);
 
 	DeleteDC(hMemDC);
-	ReleaseDC( hWnd, hdc );
+	ReleaseDC(hWnd, hdc);
 }
+
+
 
 
 void process()
-{
-	Draw();	// ½ÇÁ¦ÀûÀ¸·Î ±×¸®´Â ºÎºĞ.
-	Flip();	// Draw¿¡¼­ Back Buffer·Î ±×¸²µéÀ» ±×·È±â ¶§¹®¿¡, ¿©±â¼­ È­¸é°ú Back Buffer¸¦ ¹Ù²ãÄ¡±â(Flip)ÇÏ´Â ºÎºĞÀÌ´Ù.
+{	
+	if (player[0].score >1 || player[1].score > 1 || limit_time < 1) gameState = 1;
+	
+	calScore();
+	if ((limit_time<31 && limit_time > -1) && gameState == 0) loop();
+	Draw();	// ì‹¤ì œì ìœ¼ë¡œ ê·¸ë¦¬ëŠ” ë¶€ë¶„.
+	Flip();	// Drawì—ì„œ Back Bufferë¡œ ê·¸ë¦¼ë“¤ì„ ê·¸ë ¸ê¸° ë•Œë¬¸ì—, ì—¬ê¸°ì„œ í™”ë©´ê³¼ Back Bufferë¥¼ ë°”ê¿”ì¹˜ê¸°(Flip)í•˜ëŠ” ë¶€ë¶„ì´ë‹¤.
 }
 
 
-int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance
-		  ,LPSTR lpszCmdParam,int nCmdShow)
+void init_game() {//ê²Œì„ì„ ì‹œì‘í•  ë•Œ ê° ìš”ì†Œë¥¼ ì´ˆê¸°í™” í•œë‹¤.
+
+	gameState = 0;
+	default_time = 31;
+	start_time_point = timeGetTime();
+
+	player[0] = {0, };
+	player[1] = {0, };
+	
+
+	player[0].posX = 290;
+	player[0].posY = 605;
+	player[0].curStatus = 2;
+	player[0].curTemp = -1;
+
+	player[1].posX = 350;
+	player[1].posY = 600;
+	player[1].curStatus = 2;
+	player[1].curTemp = -1;
+
+	//1P 2Pì‹œì‘ ìœ„ì¹˜(ì¶”í›„ ì¬ ì„¤ì •), ì• ë‹ˆë©”ì´ì…˜ ì‹œì‘ ì´ˆê¸°í™”.
+
+
+
+	for (int i = 0; i < flag_count; i++) {
+
+		flag[0][i].curTemp = 0;
+		flag[0][i].posX = 0;
+		flag[0][i].posY = 0;
+		flag[0][i].curStatus = 0;
+
+
+		flag[1][i].curTemp = 0;
+		flag[1][i].posX = 0;
+		flag[1][i].posY = 0;
+		flag[1][i].curStatus = 0;
+
+	}
+
+	//ê¹ƒë°œ ë‚´ì—­ ì´ˆê¸°í™”
+
+
+	for (int i = 0; i < 20; i++)
+		for (int j = 0; j < 20; j++) {
+			if ((i < 8 || i>11) && j == 0)  mapBlock[j][i] = 5;
+			else if ((i < 2 || i>17) && (j < 5 || j >13)) mapBlock[j][i] = 5;
+			else if ((i > 17) && (j > 4 && j < 7)) mapBlock[j][i] = 5;
+			else if (((i > 1 && i < 6) || (i > 13 && i < 18)) && j > 17) mapBlock[j][i] = 5;
+			else mapBlock[j][i] = 0;
+		}
+	//
+
+	//ë§µíƒ€ì¼ ì´ˆê¸°í™” 
+	srand(unsigned int(time(NULL)));
+
+	static int m_nNum[16];
+
+	for (int i = 0; i < 16; i++) {
+		if (i < 3) m_nNum[i] = 1;
+		else m_nNum[i] = 0;
+	}
+
+	int nDust, nSour, nTemp;
+
+	for (int i = 0; i < 32; i++) {
+
+		nDust = rand() % 16;
+		nSour = rand() % 16;
+
+		nTemp = m_nNum[nDust];
+		m_nNum[nDust] = m_nNum[nSour];
+		m_nNum[nSour] = nTemp;
+
+	}
+	int temp = 2;
+	for (int i = 0; i < 16; i++) {
+
+		if (m_nNum[i] == 1) {
+			int x, y;
+			x = int(i / 4);
+			y = int(i % 4);
+			answer[temp].posX = 128 * x;
+			answer[temp].posY = 128 * y;
+
+			x = 4 + 4 * x;
+			y = 4 + 4 * y;
+
+			answer[temp].curTemp = x;
+			answer[temp].curStatus = y;
+
+			mapBlock[y][x] = 1;
+			mapBlock[y][x-1] = 1;
+			mapBlock[y - 1][x] = 1;
+			mapBlock[y - 1][x - 1] = 1;
+
+
+
+			temp--;
+		}
+	}
+
+	//ë³´ë¬¼ì˜ ìœ„ì¹˜ë¥¼ ëœë¤ìœ¼ë¡œ ì„ëŠ” ë¶€ë¶„
+
+	gItem.setNewItem();
+	if (mapBlock[gItem.posY][gItem.posX] != 0) {
+		gItem.posX += 2;
+		gItem.posY += 2;
+	}
+	mapBlock[gItem.posY][gItem.posX] = 2;
+
+
+	//ì•„ì´í…œì„ ë§µì— ë°°ì¹˜
+
+}
+
+
+
+void check_click_point(int x, int y) {
+
+	if ((x > 280 && x < 360) && (y > 680 && y < 720)) init_game();
+
+}
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
+	, LPSTR lpszCmdParam, int nCmdShow)
 {
-	// ±¦È÷ µÇµµ¾Ê´Â À©µµ¿ì ±¸Á¶Ã¼ ¼±¾ğºÎºĞÀÌ´Ù. ¾çÀÌ ¸¹´Ù°í ÂÌÁö ¸¶¶ó. °Á ¹«½ÃÇÏ°í ³Ñ¾î°¡¸é µÈ´Ù.
+	// ìœˆë„ìš° êµ¬ì¡°ì²´ ì„ ì–¸ë¶€ë¶„
 
 	MSG Message;
 	WNDCLASS WndClass;
-	g_hInst=hInstance;
-	
-	WndClass.cbClsExtra=0;
-	WndClass.cbWndExtra=0;
-	WndClass.hbrBackground=(HBRUSH)GetStockObject(WHITE_BRUSH);
-	WndClass.hCursor=LoadCursor(NULL,IDC_ARROW);
-	WndClass.hIcon=LoadIcon(hInstance,IDI_APPLICATION);
-	WndClass.hInstance=hInstance;
-	WndClass.lpfnWndProc=(WNDPROC)WndProc;
-	WndClass.lpszClassName=lpszClass;
-	WndClass.lpszMenuName=NULL;
-	WndClass.style=CS_HREDRAW | CS_VREDRAW;
+	g_hInst = hInstance;
+
+	WndClass.cbClsExtra = 0;
+	WndClass.cbWndExtra = 0;
+	WndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	WndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+	WndClass.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
+	WndClass.hInstance = hInstance;
+	WndClass.lpfnWndProc = (WNDPROC)WndProc;
+	WndClass.lpszClassName = lpszClass;
+	WndClass.lpszMenuName = NULL;
+	WndClass.style = CS_HREDRAW | CS_VREDRAW;
 	RegisterClass(&WndClass);
 
-	hWnd=CreateWindow(lpszClass,lpszClass,WS_SYSMENU,
-		  CW_USEDEFAULT,CW_USEDEFAULT,800,450,
-		  NULL,(HMENU)NULL,hInstance,NULL);
-	ShowWindow(hWnd,nCmdShow);
 
-	// ±×¸²ÆÄÀÏÀ» ÀĞ¾î¿Â´Ù. ÀÌ¸¦Å×¸é "bg.bmp"¶ó´Â ÆÄÀÏÀ» hBit_mapÀÌ¶ó´Â ºñÆ®¸Ê Çì´õ¿¡ Áı¾î³Ö´Â´Ù´Â ÀÇ¹ÌÀÌ´Ù.
+	
+	mciOpen.lpstrElementName = "bgm.mp3"; // íŒŒì¼ ê²½ë¡œ ì…ë ¥
+	mciOpen.lpstrDeviceType = "mpegvideo";
 
-	LoadBmp( "background.bmp", &hBit_map );
-	LoadBmp( "circle.bmp", &hBit_circle );
+	mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE,
+	(DWORD)(LPVOID)&mciOpen);
+
+	dwID = mciOpen.wDeviceID;
+	mciSendCommand(dwID, MCI_PLAY, MCI_DGV_PLAY_REPEAT, // play & repeat
+	(DWORD)(LPVOID)&m_mciPlayParms);
+	// ì‚¬ìš´ë“œ ë¶€ë¶„
+
+
+	hWnd = CreateWindow(lpszClass, lpszClass, WS_SYSMENU,
+		CW_USEDEFAULT, CW_USEDEFAULT, 656, 776,
+		NULL, (HMENU)NULL, hInstance, NULL);
+	ShowWindow(hWnd, nCmdShow);
+
+	// ê·¸ë¦¼íŒŒì¼ì„ ì½ì–´ì˜¨ë‹¤. ì´ë¥¼í…Œë©´ "bg.bmp"ë¼ëŠ” íŒŒì¼ì„ hBit_mapì´ë¼ëŠ” ë¹„íŠ¸ë§µ í—¤ë”ì— ì§‘ì–´ë„£ëŠ”ë‹¤ëŠ” ì˜ë¯¸ì´ë‹¤.
+
+	LoadBmp("map.bmp", &hBit_map);
+	LoadBmp("player.bmp", &hBit_player);
+	LoadBmp("map_tile.bmp", &hBit_mt);
+
+	//ë³´ë¬¼ í‘œì‹œ
+
+	init_game();
+
+	DWORD dwStartTick;
+	DWORD dwDelay;
+	DWORD dwInterval = 1000 / 30;
 
 
 
-	// ±âº» ¸Ş½ÃÁö ·çÇÁÀÔ´Ï´Ù.
 
-	while( 1 )
+	// ê¸°ë³¸ ë©”ì‹œì§€ ë£¨í”„ì…ë‹ˆë‹¤.
+
+	while (1)
 	{
-		// ¿î¿µÃ¼Á¦·ÎºÎÅÍ ¹º°¡ ¸Ş½ÃÁö°¡ µé¾î¿À¸é ±×°É Ã³¸®ÇÏ°í,
-		if( PeekMessage(&Message , NULL , 0 , 0 , PM_NOREMOVE) )
+
+
+		limit_time = default_time - ((timeGetTime() - start_time_point) / 1000);
+		//ì œí•œì‹œê°„ì„ í‘œì‹œ 100(ê¸°ë³¸ ì£¼ì–´ì§€ëŠ” ì‹œê°„)) - ((í˜„ì¬ì‹œê°„ì„ ë°›ì•„ì˜¤ëŠ” í•¨ìˆ˜  - ì‹œì‘ì‹œê°„))
+
+		dwStartTick = GetTickCount();
+		dwDelay = dwInterval - (GetTickCount() - dwStartTick);
+
+		//í”„ë ˆì„ê°’ ( í˜„ì¬ ì‹œê°„ - í”„ë¡œê·¸ë¨ ì‹œì‘í–ˆì„ë•Œ);
+
+		
+		// ìš´ì˜ì²´ì œë¡œë¶€í„° ë­”ê°€ ë©”ì‹œì§€ê°€ ë“¤ì–´ì˜¤ë©´ ê·¸ê±¸ ì²˜ë¦¬í•˜ê³ ,
+		if (PeekMessage(&Message, NULL, 0, 0, PM_NOREMOVE))
 		{
-			if(!GetMessage(&Message, NULL, 0, 0)) break ;
+			if (!GetMessage(&Message, NULL, 0, 0)) break;
 			TranslateMessage(&Message);
 			DispatchMessage(&Message);
 		}
-		// µüÈ÷ ¾ø´Ù¸é ±×¸²À» ±×¸®´Â µîÀÇ µıÁşÀ» ÇÑ´Ù.
+		// ë”±íˆ ì—†ë‹¤ë©´ ê·¸ë¦¼ì„ ê·¸ë¦¬ëŠ” ë“±ì˜ ë”´ì§“ì„ í•œë‹¤.
 		else
-		{
-			process();
+		{						
+				process();
+				Sleep(dwDelay);		
+			//ë Œë”ë§ í•˜ëŠ” ë¶€ë¶„.
 		}
-		if ( checked_point == 3 ) // ´Ù ¸ÂÃß¸é ÇÁ·Î±×·¥ Á¾·á
-		{
-			ending = true;
-		}
-
-		if ( failed_point == 0)// ´Ù Æ²·Áµµ ÇÁ·Î±×·¥ Á¾·á
-		{
-			ending = true;
-		}
-
-		if ( ending == true && checked_point == 3 )
-		{
-			MessageBox(hWnd, TEXT("ÃàÇÏÇÕ´Ï´Ù. ¸ğµÎ ¸ÂÃß¼Ì½À´Ï´Ù."),
-			TEXT("Cleared!!"), MB_OK);
-			break;
-		}
-		else if ( ending == true && failed_point == 0 )
-		{
-			MessageBox(hWnd, TEXT("Oh My Shoulder!"),
-			TEXT("Game Over"), MB_OK);
-			break;
-		}
-
-		if ( limit_time == 0 )
-		{
-			MessageBox(hWnd, TEXT("Àåºñ¸¦ Á¤ÁöÇÕ´Ï´Ù."),
-			TEXT("Time Over!"), MB_OK);
-			break;
-		}
-
 	}
-
 	return Message.wParam;
 }
 
-void check_click_point()
+int m_x, m_y;
+
+
+//ë§ˆìš°ìŠ¤ , í‚¤ë³´ë“œ ì…ë ¥ ë©”ì‹œì§€ë¥¼ ì²˜ë¦¬í•˜ëŠ” ë¶€ë¶„
+LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 {
-	if ( m_x >= point1[0] && m_x <= point1[2] && m_y >= point1[1] && m_y <= point1[3])
-	{	
-		if ( checked[0] != true )
-		{
-			checked_point ++;
-			checked[0] = true;
-		}
-		istrue = true;
-	}//ÀÚºí¶ó´Ï Ã£À»¶§ - ´Ù¸¥ ±×¸²¿¡¼­
-
-	else if ( m_x >= point2[0] && m_x <= point2[2] && m_y >= point2[1] && m_y <= point2[3] )
-	{
-		if ( checked[1] != true )
-		{
-			checked_point ++;
-			checked[1] = true;
-		}
-		istrue = true;
-	}//Sonata Arctica Ã£À»¶§ - ´Ù¸¥ ±×¸²¿¡¼­
-
-	else if ( m_x >= point3[0] && m_x <= point3[2] && m_y >= point3[1] && m_y <= point3[3] )
-	{
-		if ( checked[2] != true )
-		{
-			checked_point ++;
-			checked[2] = true;
-		}
-		istrue = true;
-	}//·¹½ºÆú Ã£À»¶§ - ´Ù¸¥ ±×¸²¿¡¼­
-	
-	else if ( m_x >= point1[0] - 400 && m_x <= point1[2] - 400 && m_y >= point1[1] && m_y <= point1[3] )
-	{
-		if ( checked[0] != true )
-		{
-			checked_point ++;
-			checked[0] = true;
-		}
-		istrue = true;
-	}//ÀÚºí¶ó´Ï Ã£À»¶§ - ¿øº» ±×¸²¿¡¼­
-
-	else if ( m_x >= point2[0] - 400 && m_x <= point2[2] - 400 && m_y >= point2[1] && m_y <= point2[3] )
-	{
-		if ( checked[1] != true )
-		{
-			checked_point ++;
-			checked[1] = true;
-		}
-		istrue = true;
-	}//Sonata Arctica Ã£À»¶§ - ¿øº» ±×¸²¿¡¼­
-
-	else if ( m_x >= point3[0] - 400 && m_x <= point3[2] - 400 && m_y >= point3[1] && m_y <= point3[3] )
-	{
-		if ( checked[2] != true )
-		{
-			checked_point ++;
-			checked[2] = true;
-		}
-		istrue = true;
-	}//·¹½ºÆú Ã£À»¶§ - ¿øº» ±×¸²¿¡¼­
-
-	else
-	{
-		failed_point --;
-		istrue = false;
-	}
-
-
-}
-
-LRESULT CALLBACK WndProc(HWND hWnd,UINT iMessage,WPARAM wParam,LPARAM lParam)
-{
-	switch(iMessage) {
-
-	
-	case WM_MOUSEMOVE:
-		m_x = LOWORD(lParam);
-		m_y = HIWORD(lParam);
-		return 0;
+	switch (iMessage) {
 
 	case WM_LBUTTONDOWN:
-		clicked = timeGetTime();
-		check_click_point();
-		return 0;
+	{
+		if (gameState == 1) check_click_point(m_x, m_y);
+	}
+	break;
+	
+	case WM_MOUSEMOVE:
+	m_x = LOWORD(lParam);
+	m_y = HIWORD(lParam);
+	break;
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		return 0;
+		break;
+
+	case WM_KEYUP:
+		KeyBuffer[wParam] = FALSE;
+		break;
+	
+	case WM_KEYDOWN:
+		switch (wParam) {
+
+		case VK_SPACE:
+		{
+			static int nextflag = 0;
+			if (flag[0][nextflag].curTemp != 1) {
+				flag[0][nextflag].posX = player[0].posX;
+				flag[0][nextflag].posY = player[0].posY;
+				flag[0][nextflag].curStatus = player[0].curBlock;
+				setFlaganswer(CalBlock(flag[0][nextflag].posX), CalBlock(flag[0][nextflag].posY), 6);
+				flag[0][nextflag].curTemp = 1;
+				nextflag = (nextflag + 1) % 3;
+				checkScore();
+			}
+
+
+		}
+		break;
+
+		case 0x47:
+		{
+			static int nextflag = 0;
+			if (flag[1][nextflag].curTemp != 1) {
+				flag[1][nextflag].posX = player[1].posX;
+				flag[1][nextflag].posY = player[1].posY;
+				flag[1][nextflag].curStatus = player[1].curBlock;
+				flag[1][nextflag].curTemp = 1;
+				setFlaganswer(CalBlock(flag[1][nextflag].posX), CalBlock(flag[1][nextflag].posY), 7);
+				nextflag = (nextflag + 1) % 3;
+				checkScore();
+			}
+
+
+		}
+		break;
+
+		default:
+			KeyBuffer[wParam] = TRUE;
+			break;
+		}
 	}
-	return(DefWindowProc(hWnd,iMessage,wParam,lParam));
+	return(DefWindowProc(hWnd, iMessage, wParam, lParam));
 }
